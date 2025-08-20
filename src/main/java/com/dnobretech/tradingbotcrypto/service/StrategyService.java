@@ -5,13 +5,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.*;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
-import org.ta4j.core.indicators.EMAIndicator;
+import org.ta4j.core.indicators.ema.EMAIndicator;
 import org.ta4j.core.indicators.RSIIndicator;
 import org.ta4j.core.indicators.bollinger.*;
 import org.ta4j.core.rules.CrossedDownIndicatorRule;
 import org.ta4j.core.rules.CrossedUpIndicatorRule;
-import org.ta4j.core.rules.OverboughtRule;
-import org.ta4j.core.rules.OversoldRule;
+import org.ta4j.core.rules.OverIndicatorRule;
+import org.ta4j.core.rules.UnderIndicatorRule;
 
 
 import java.time.ZoneOffset;
@@ -33,7 +33,8 @@ public class StrategyService {
                     c.getHigh().doubleValue(),
                     c.getLow().doubleValue(),
                     c.getClose().doubleValue(),
-                    c.getVolume().doubleValue());
+                    c.getVolume().doubleValue(),
+                    0d);
         }
         return series;
     }
@@ -56,8 +57,8 @@ public class StrategyService {
         BollingerBandsStandardDeviationIndicator sd = new BollingerBandsStandardDeviationIndicator(close, bbPeriod);
         BollingerBandsUpperIndicator upper = new BollingerBandsUpperIndicator(middle, sd);
         BollingerBandsLowerIndicator lower = new BollingerBandsLowerIndicator(middle, sd);
-        Rule entry = new OversoldRule(rsi, 30).and(new CrossedDownIndicatorRule(close, lower));
-        Rule exit = new OverboughtRule(rsi, 70).or(new CrossedUpIndicatorRule(close, upper));
+        Rule entry = new UnderIndicatorRule(rsi, 30).and(new CrossedDownIndicatorRule(close, lower));
+        Rule exit = new OverIndicatorRule(rsi, 70).or(new CrossedUpIndicatorRule(close, upper));
         return new BaseStrategy(entry, exit);
     }
 }

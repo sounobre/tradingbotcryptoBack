@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.Strategy;
-import org.ta4j.core.Trade;
+import org.ta4j.core.Position;
 import org.ta4j.core.TradingRecord;
 import org.ta4j.core.backtest.BarSeriesManager;
 
@@ -43,9 +43,9 @@ public class BacktestService {
         int wins=0; int losses=0; BigDecimal grossProfit=BigDecimal.ZERO; BigDecimal grossLoss=BigDecimal.ZERO;
 
 
-        for (Trade t : record.getTrades()) {
-            int entryIndex = t.getEntry().getIndex();
-            int exitIndex = t.getExit().getIndex();
+        for (Position p : record.getPositions()) {
+            int entryIndex = p.getEntry().getIndex();
+            int exitIndex = p.getExit().getIndex();
             double entryPrice = series.getBar(entryIndex).getClosePrice().doubleValue();
             double exitPrice = series.getBar(exitIndex).getClosePrice().doubleValue();
             BigDecimal pnlPct = BigDecimal.valueOf((exitPrice - entryPrice) / entryPrice * 100);
@@ -55,18 +55,19 @@ public class BacktestService {
             if (equity.compareTo(peak) > 0) peak = equity;
             BigDecimal dd = peak.compareTo(BigDecimal.ZERO)>0 ? peak.subtract(equity).divide(peak, 8, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO;
             if (dd.compareTo(maxDD) > 0) maxDD = dd;
-            trades.add(new BacktestDtos.TradePoint(series.getBar(exitIndex).getEndTime().toInstant(), exitPrice>=entryPrice?"SELL":"SELL", BigDecimal.valueOf(exitPrice)));
-            equityPoints.add(new BacktestDtos.EquityPoint(series.getBar(exitIndex).getEndTime().toInstant(), equity));
+            java.time.Instant time = series.getBar(exitIndex).getEndTime();
+            trades.add(new BacktestDtos.TradePoint(time, exitPrice>=entryPrice?"SELL":"SELL", BigDecimal.valueOf(exitPrice)));
+            equityPoints.add(new BacktestDtos.EquityPoint(time, equity));
         }
 
 
         BigDecimal totalReturnPct = equity.subtract(BigDecimal.valueOf(10000)).divide(BigDecimal.valueOf(100), 8, java.math.RoundingMode.HALF_UP);
-        BigDecimal winRatePct = record.getTradeCount() > 0 ? BigDecimal.valueOf((wins * 100.0) / record.getTradeCount()) : BigDecimal.ZERO;
+        BigDecimal winRatePct = record.getPositionCount() > 0 ? BigDecimal.valueOf((wins * 100.0) / record.getPositionCount()) : BigDecimal.ZERO;
         BigDecimal profitFactor = grossLoss.compareTo(BigDecimal.ZERO)>0 ? grossProfit.divide(grossLoss, 8, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO;
         BigDecimal maxDrawdownPct = maxDD.multiply(BigDecimal.valueOf(100));
 
 
-        BacktestDtos.Metrics metrics = new BacktestDtos.Metrics(totalReturnPct, maxDrawdownPct, winRatePct, profitFactor, record.getTradeCount());
+        BacktestDtos.Metrics metrics = new BacktestDtos.Metrics(totalReturnPct, maxDrawdownPct, winRatePct, profitFactor, record.getPositionCount());
         return new BacktestDtos.BacktestResult(metrics, equityPoints, trades);
     }
 }
