@@ -6,7 +6,18 @@ import java.util.List;
 
 
 public class BacktestDtos {
-    public record BacktestRequest(String symbol, String interval, Integer limit, String strategy, Integer fast, Integer slow, Integer rsi, Integer bb) {}
+    public record BacktestRequest(
+            String symbol,
+            String interval,
+            Integer limit,
+            String strategy,
+            Integer fast,
+            Integer slow,
+            Integer rsi,
+            Integer bb,
+            BigDecimal initialCapital,
+            BigDecimal positionSize
+    ) {}
     public record TradePoint(Instant time, String type, BigDecimal price) {}
     public record EquityPoint(Instant time, BigDecimal value) {}
     public record Metrics(BigDecimal totalReturnPct, BigDecimal maxDrawdownPct, BigDecimal winRatePct, BigDecimal profitFactor, int trades) {}
