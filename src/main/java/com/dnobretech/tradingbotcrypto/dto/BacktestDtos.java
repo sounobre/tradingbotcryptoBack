@@ -11,8 +11,9 @@ public class BacktestDtos {
             String interval,
             Integer limit,
             String strategy,
-            Integer fast,
-            Integer slow,
+            Integer fast,   // EMA/MACD fast period
+            Integer slow,   // EMA/MACD slow period
+            Integer signal, // MACD signal period
             Integer rsi,
             Integer bb,
             BigDecimal initialCapital,

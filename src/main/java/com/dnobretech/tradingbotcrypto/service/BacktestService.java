@@ -21,11 +21,13 @@ public class BacktestService {
     private final StrategyService strategyService;
 
 
-    public BacktestDtos.BacktestResult run(List<Candle> candles, String strategyName, int fast, int slow, int rsi, int bb, BigDecimal initialCapital, BigDecimal positionSize){
+    public BacktestDtos.BacktestResult run(List<Candle> candles, String strategyName, int fast, int slow, int signal, int rsi, int bb, BigDecimal initialCapital, BigDecimal positionSize){
         BarSeries series = strategyService.toSeries(candles);
-        Strategy strategy = "rsi_boll".equals(strategyName) ?
-                strategyService.rsiBoll(series, rsi, bb) :
-                strategyService.emaCross(series, fast, slow);
+        Strategy strategy = switch (strategyName) {
+            case "rsi_boll" -> strategyService.rsiBoll(series, rsi, bb);
+            case "macd_rsi" -> strategyService.macdRsi(series, fast, slow, signal, rsi);
+            default -> strategyService.emaCross(series, fast, slow);
+        };
 
 
         BarSeriesManager mgr = new BarSeriesManager(series);
