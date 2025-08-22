@@ -5,14 +5,11 @@ spring:
     password: trader
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate.jdbc.time_zone: UTC
-  flyway:
-    enabled: true
 server:
   port: 8080
-
 
 app:
   ingest:
