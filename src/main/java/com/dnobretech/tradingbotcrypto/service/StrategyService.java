@@ -4,18 +4,19 @@ import com.dnobretech.tradingbotcrypto.domain.Candle;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.*;
-import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
-import org.ta4j.core.indicators.ema.EMAIndicator;
 import org.ta4j.core.indicators.RSIIndicator;
 import org.ta4j.core.indicators.bollinger.*;
+import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
+import org.ta4j.core.indicators.averages.EMAIndicator;
+import org.ta4j.core.indicators.averages.SMAIndicator;
+import org.ta4j.core.indicators.statistics.StandardDeviationIndicator;
 import org.ta4j.core.rules.CrossedDownIndicatorRule;
 import org.ta4j.core.rules.CrossedUpIndicatorRule;
 import org.ta4j.core.rules.OverIndicatorRule;
 import org.ta4j.core.rules.UnderIndicatorRule;
 
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.Duration;
 import java.util.List;
 
 
@@ -27,14 +28,20 @@ public class StrategyService {
     public BarSeries toSeries(List<Candle> candles){
         BarSeries series = new BaseBarSeriesBuilder().withName("series").build();
         for (Candle c : candles) {
-            ZonedDateTime et = ZonedDateTime.ofInstant(c.getCloseTime(), ZoneOffset.UTC);
-            series.addBar(et,
-                    c.getOpen().doubleValue(),
-                    c.getHigh().doubleValue(),
-                    c.getLow().doubleValue(),
-                    c.getClose().doubleValue(),
-                    c.getVolume().doubleValue(),
-                    0d);
+            Duration duration = Duration.between(c.getOpenTime(), c.getCloseTime());
+            var numFactory = series.numFactory();
+            Bar bar = new BaseBar(
+                    duration,
+                    c.getCloseTime(),
+                    numFactory.numOf(c.getOpen()),
+                    numFactory.numOf(c.getHigh()),
+                    numFactory.numOf(c.getLow()),
+                    numFactory.numOf(c.getClose()),
+                    numFactory.numOf(c.getVolume()),
+                    numFactory.numOf(0),
+                    0
+            );
+            series.addBar(bar);
         }
         return series;
     }
@@ -54,7 +61,7 @@ public class StrategyService {
         ClosePriceIndicator close = new ClosePriceIndicator(series);
         RSIIndicator rsi = new RSIIndicator(close, rsiPeriod);
         BollingerBandsMiddleIndicator middle = new BollingerBandsMiddleIndicator(new SMAIndicator(close, bbPeriod));
-        BollingerBandsStandardDeviationIndicator sd = new BollingerBandsStandardDeviationIndicator(close, bbPeriod);
+        StandardDeviationIndicator sd = new StandardDeviationIndicator(close, bbPeriod);
         BollingerBandsUpperIndicator upper = new BollingerBandsUpperIndicator(middle, sd);
         BollingerBandsLowerIndicator lower = new BollingerBandsLowerIndicator(middle, sd);
         Rule entry = new UnderIndicatorRule(rsi, 30).and(new CrossedDownIndicatorRule(close, lower));
