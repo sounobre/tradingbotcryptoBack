@@ -22,13 +22,17 @@ public class BinanceClient {
     private final HttpClient http = HttpClient.newHttpClient();
 
 
-    public List<Candle> fetchRecent(String symbol, String interval, int limit) {
+    public List<Candle> fetchRecent(String symbol, String interval, int limit, Instant startTime, Instant endTime) {
         try {
-            String url = String.format("https://api.binance.com/api/v3/klines?symbol=%s&interval=%s&limit=%d", symbol, interval, limit);
-            HttpRequest req = HttpRequest.newBuilder(URI.create(url)).GET().build();
+            StringBuilder url = new StringBuilder(String.format(
+                    "https://api.binance.com/api/v3/klines?symbol=%s&interval=%s", symbol, interval));
+            if (limit > 0) url.append("&limit=").append(limit);
+            if (startTime != null) url.append("&startTime=").append(startTime.toEpochMilli());
+            if (endTime != null) url.append("&endTime=").append(endTime.toEpochMilli());
+            HttpRequest req = HttpRequest.newBuilder(URI.create(url.toString())).GET().build();
             HttpResponse<String> res = http.send(req, HttpResponse.BodyHandlers.ofString());
             if (res.statusCode() != 200) throw new RuntimeException("Binance error: " + res.statusCode());
-// Response is an array of arrays; we parse manually to avoid extra deps
+            // Response is an array of arrays; we parse manually to avoid extra deps
             return parseKlinesJson(res.body(), symbol, interval);
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
