@@ -27,7 +27,7 @@ public class BacktestController {
         java.util.Collections.reverse(candles);
         BigDecimal initialCapital = req.initialCapital()==null?BigDecimal.valueOf(10000):req.initialCapital();
         BigDecimal positionSize = req.positionSize()==null?BigDecimal.ONE:req.positionSize();
-        return backtestService.run(candles, req.strategy(), n(req.fast(),12), n(req.slow(),26), n(req.rsi(),14), n(req.bb(),20), initialCapital, positionSize);
+        return backtestService.run(candles, req.strategy(), n(req.fast(),12), n(req.slow(),26), n(req.signal(),9), n(req.rsi(),14), n(req.bb(),20), initialCapital, positionSize);
     }
 
 

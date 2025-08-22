@@ -10,6 +10,7 @@ import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.indicators.averages.EMAIndicator;
 import org.ta4j.core.indicators.averages.SMAIndicator;
 import org.ta4j.core.indicators.statistics.StandardDeviationIndicator;
+import org.ta4j.core.indicators.MACDIndicator;
 import org.ta4j.core.rules.CrossedDownIndicatorRule;
 import org.ta4j.core.rules.CrossedUpIndicatorRule;
 import org.ta4j.core.rules.OverIndicatorRule;
@@ -66,6 +67,17 @@ public class StrategyService {
         BollingerBandsLowerIndicator lower = new BollingerBandsLowerIndicator(middle, sd);
         Rule entry = new UnderIndicatorRule(rsi, 30).and(new CrossedDownIndicatorRule(close, lower));
         Rule exit = new OverIndicatorRule(rsi, 70).or(new CrossedUpIndicatorRule(close, upper));
+        return new BaseStrategy(entry, exit);
+    }
+
+
+    public Strategy macdRsi(BarSeries series, int fast, int slow, int signal, int rsiPeriod){
+        ClosePriceIndicator close = new ClosePriceIndicator(series);
+        MACDIndicator macd = new MACDIndicator(close, fast, slow);
+        EMAIndicator macdSignal = new EMAIndicator(macd, signal);
+        RSIIndicator rsi = new RSIIndicator(close, rsiPeriod);
+        Rule entry = new CrossedUpIndicatorRule(macd, macdSignal).and(new UnderIndicatorRule(rsi, 30));
+        Rule exit = new CrossedDownIndicatorRule(macd, macdSignal).or(new OverIndicatorRule(rsi, 70));
         return new BaseStrategy(entry, exit);
     }
 }
